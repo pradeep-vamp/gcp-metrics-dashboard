@@ -1,0 +1,94 @@
+body {
+	background: whitesmoke;
+}
+
+.tab {
+	background: transparent !important;
+		border: none !important;
+	border-bottom: 1px solid  #d6d6d6 !important;
+	max-width: 30%;
+	margin-bottom: 1rem;
+}
+
+.tab.tab--selected {
+
+	font-weight: bold;
+}
+
+.card-header {
+background-color: white;
+border-bottom: 1px light #d6d6d6;
+
+}
+
+.card-header h5 {
+	font-weight: bold;
+
+}
+
+.card {
+	border: none;
+	border-radius: 5px;
+	box-shadow: 2px 4px 5px 0px #bbb;
+}
+
+.container {
+	background: whitesmoke;
+	max-width: 80%;
+
+}
+
+.filter_row {
+width: 80%;
+max-width: 95%;
+margin: 0;
+padding-top: 30px;
+}
+
+
+.DateRangePickerInput, .DateRangePicker, .DateInput, .DateInput_input {
+background: transparent !important;
+width: fit-content !important;
+border: none !important;
+text-align: center;
+}
+
+#talent_value_box_row {
+	margin-top: 20px;
+    display: inline-flex;
+    justify-content: space-evenly;
+    width: 100%;
+}
+
+
+.row.row-1 {
+	margin-left: 0;
+	margin-right: 0;
+
+}
+
+.dash-table-container {
+	border-radius: 5px;
+    box-shadow: 2px 4px 5px 0px #bbb;
+}
+
+#self_serve_revenue_vb{
+	flex: 0 0 20%;
+    max-width: 20%;
+}
+ #vamp_revenue_vb {
+ 	flex: 0 0 20%;
+    max-width: 20%;
+}
+ #new_business_vb {
+ 	flex: 0 0 20%;
+    max-width: 20%;
+}
+ #returning_business_vb {
+ 	flex: 0 0 20%;
+    max-width: 20%;
+}
+ #ave_campaign_value_vb {
+ 	flex: 0 0 20%;
+    max-width: 20%;
+ }

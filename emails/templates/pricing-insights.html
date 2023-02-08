@@ -1,0 +1,117 @@
+
+<!DOCTYPE html>
+<!--
+##
+## templates/pricing-insights.html
+##
+## @ticket:
+## @date:       2022-03-16
+## @auth:       Daniel Stratti < daniels@vamp.me >
+##
+## @desc:
+## This file holds the HTML layout for the pricing insights email
+-->
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="x-apple-disable-message-reformatting">
+    <title></title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    <style>
+        table, td, div, h1, p {font-family: Arial, sans-serif;}
+        table, td {border: none;}
+
+        .border {border: 2px #0A0A0A !important;}
+        .highlight {background: #6c25ff; color: #FFF;/*#ccff00*/}
+        .table-row {
+        	padding: 0.35rem;
+        }
+    </style>
+</head>
+    <body style="margin:0;padding:0;">
+        <table role="presentation" style="width:100%;border-collapse:collapse;border:0;border-spacing:0;background:#ffffff;">
+            <tr>
+                <td align="center" style="padding:0;">
+                    <table role="presentation" style="width:802px;border-collapse:collapse;border:1px solid #cccccc;border-spacing:0;text-align:left;">
+                        <tr>
+                            <td align="center" style="padding:40px 0 30px 0; height: 185px; background-image: url('https://images.nintendolife.com/12694ef74fb26/mario-and-luigi-banner.large.jpg');">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding:36px 15px 42px 15px;">
+                                <table role="presentation" style="width:100%;border-collapse:collapse;border:0;border-spacing:0;">
+                                    <tr>
+                                        <td style="padding:0 0 36px 0;color:#153643;">
+                                            <h1 style="font-size:24px;margin:0 0 20px 0;font-family:Arial,sans-serif;">Pricing Insights!</h1>
+                                            <p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">Hello from the data team. Below are a few interesting insights around pricing on the platform for markets that had over 200 briefs this month. Specifically, the below tables outline which countries have a high percentage of deliverables valued at more than 5 tokens as well as a countries application rates. Additionally, the average percentage that talent increase/decrease their custom prices is also highlighted.
+                                            <p style="margin:0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">For more indepth details, please visit the <a href="https://metrics.vamp.me/" style="color:#ee4c50;text-decoration:underline;">metrics</a> site</p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:0;">
+                                            <table role="presentation" style="width:100%;border-collapse:collapse;border:0;border-spacing:0;">
+                                                <tr>
+                                                    <td class="border" style="width:240px;padding:5px;vertical-align:top;color:#153643;">
+                                                        <p style="margin:0 0 25px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;"><img src="https://cdn-icons-png.flaticon.com/512/2165/2165574.png" alt="" width="240" style="height:auto;display:block;margin:0 auto 0 auto;" /></p>
+
+                                                        <p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">The following countries have had the largest percentage of deliverables above 5 tokens</p>
+
+                                                        <!-- Application Rates -->
+                                                         {{ deliverable_section }}
+                                                    </td>
+                                                    <!--td style="width:20px;padding:0;font-size:0;line-height:0;">&nbsp;</td-->
+                                                    <td style="width:240px;padding:5px;vertical-align:top;color:#153643;">
+                                                        <p style="margin:0 0 25px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;"><img src="https://icon-library.com/images/country-icon/country-icon-3.jpg" alt="" width="240" style="height:auto;display:block;" /></p>
+
+                                                        <p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">Below are the application rates for the countries that processed over 200 briefs this month</p>
+
+                                                        <!-- Deliverable Percentages -->
+                                                        <table role="presentation" style="width:100%;border-collapse:collapse;border:0;border-spacing:0;">
+                                                             {{ country_rows }}
+
+                                                        </table>
+                                                    </td>
+
+                                                    <td style="width:240px;padding:5px;vertical-align:top;color:#153643;">
+                                                        <p style="margin:0 0 25px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;"><img src="https://static.thenounproject.com/png/2714905-200.png" alt="" width="240" style="height:auto;display:block;" /></p>
+
+                                                        <p style="margin:0 0 12px 0;font-size:16px;line-height:24px;font-family:Arial,sans-serif;">On average, the following countries alter their prices by the following percentages</p>
+
+                                                        <!-- Application Rates -->
+                                                         {{ price_section }}
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding:30px;background:#6c25ff;">
+                                <table role="presentation" style="width:100%;border-collapse:collapse;border:0;border-spacing:0;font-size:9px;font-family:Arial,sans-serif;">
+                                    <tr>
+                                        <td style="padding:0;width:100%;" align="left">
+                                            <p style="margin:0;font-size:14px;line-height:16px;font-family:Arial,sans-serif;color:#ffffff;">&copy; Vamp 2022<br/>
+                                                For more juicy pricing insights, head on over to <a href="https://metrics.vamp.me/" target="_blank" style="color:#ffffff;text-decoration:underline;">metrics.vamp.me</a>
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>

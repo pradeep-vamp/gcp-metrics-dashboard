@@ -1,0 +1,51 @@
+service: emails
+
+# app and org for use with dashboard.serverless.com
+#app: your-app-name
+#org: your-org-name
+configValidationMode: error
+useDotenv: true
+
+plugins:
+  - serverless-python-requirements
+  - serverless-dotenv-plugin
+
+custom:
+  pythonRequirements:
+    dockerizePip: non-linux
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+
+provider:
+  name: aws
+  runtime: python3.8
+  timeout: 60
+
+
+# you can overwrite defaults here
+  region: us-east-1
+  stage: staging
+
+
+functions:
+  pricing-newsletter:
+    handler: pricing_insights.create_email
+    events:
+      # test schedule (every 15 min from 12-1 everyday for QA)
+      # - schedule: cron(0/15 12 ? * * *)
+      # Scheduled for the first monday in a month
+      - schedule: cron(0 6 1W * ? *)
+
+  campaign-margin-newsletter:
+    handler: margin-insights.create_email
+    events:
+      # Scheduled for the first monday at 9am (sydney time)
+      - schedule: cron(0 6 ? * 1 *)
+
+  campaign-performance-newsletter:
+    handler: campaign_performance.create_email
+    events:
+      # TODO: need to update schedule, currently every monday
+      - schedule: cron(0 7 ? * 1 *)
+
