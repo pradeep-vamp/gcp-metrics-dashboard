@@ -6,12 +6,6 @@ from psycopg2 import sql
 from data.fixer import conversion
 from data.functions import currency_conversions, fetch_from_postgres
 
-awh_host = os.getenv("AWH_HOST")
-awh_database = os.getenv("AWH_DATABASE")
-awh_req_user = os.getenv("AWH_DBUSER")
-awh_password = os.getenv("AWH_PASSWORD")
-awh_sslmode = os.getenv("AWH_SSLMODE")
-
 
 def retrieve_campaigns(start_date, end_date, customer_type):
     if customer_type == "selfserve":

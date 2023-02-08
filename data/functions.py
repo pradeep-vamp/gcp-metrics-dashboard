@@ -117,58 +117,59 @@ def restrict_resource(current_email=pd.DataFrame(), safe_emails=[]):
         raise PreventUpdate
 
 
-def record_influencer_action(
-    employee_email,
-    influencer_id,
-    action="suspended_influencer",
-    reason="",
-    notes="",
-):
-    aw_host = os.getenv("AWH_HOST")
-    aw_database = os.getenv("AWH_DATABASE")
-    aw_req_user = os.getenv("AWH_DBUSER")
-    aw_password = os.getenv("AWH_PASSWORD")
-    aw_sslmode = os.getenv("AWH_SSLMODE")
+# Commented as AWH warehouse no longer exists and it's not needed.
+# def record_influencer_action(
+#     employee_email,
+#     influencer_id,
+#     action="suspended_influencer",
+#     reason="",
+#     notes="",
+# ):
+#     aw_host = os.getenv("AWH_HOST")
+#     aw_database = os.getenv("AWH_DATABASE")
+#     aw_req_user = os.getenv("AWH_DBUSER")
+#     aw_password = os.getenv("AWH_PASSWORD")
+#     aw_sslmode = os.getenv("AWH_SSLMODE")
 
-    conn = connect(
-        host=aw_host,
-        database=aw_database,
-        user=aw_req_user,
-        password=aw_password,
-        sslmode=aw_sslmode,
-    )
-    cur = conn.cursor()
-    query = sql.SQL(
-        """
-        INSERT INTO warehouse.vamp_influencer_interactions (user_id, influencer_id, action, reason, notes)
-            SELECT users.id AS user_id
-                , {influencer_id} AS influencer_id
-                , '{action}' AS action
-                , '{reason}' AS reason
-                , '{notes}' AS notes
-            FROM raw.users
-            inner join raw.memberships on users.id = memberships.user_id
-            inner join raw.teams on teams.id = memberships.team_id
-            WHERE email = '{email}'
-                AND teams.type = 'vamp'
-            LIMIT 1;
-    """.format(
-            email=employee_email,
-            influencer_id=influencer_id,
-            action=action,
-            reason=reason,
-            notes=notes,
-        )
-    )
+#     conn = connect(
+#         host=aw_host,
+#         database=aw_database,
+#         user=aw_req_user,
+#         password=aw_password,
+#         sslmode=aw_sslmode,
+#     )
+#     cur = conn.cursor()
+#     query = sql.SQL(
+#         """
+#         INSERT INTO warehouse.vamp_influencer_interactions (user_id, influencer_id, action, reason, notes)
+#             SELECT users.id AS user_id
+#                 , {influencer_id} AS influencer_id
+#                 , '{action}' AS action
+#                 , '{reason}' AS reason
+#                 , '{notes}' AS notes
+#             FROM raw.users
+#             inner join raw.memberships on users.id = memberships.user_id
+#             inner join raw.teams on teams.id = memberships.team_id
+#             WHERE email = '{email}'
+#                 AND teams.type = 'vamp'
+#             LIMIT 1;
+#     """.format(
+#             email=employee_email,
+#             influencer_id=influencer_id,
+#             action=action,
+#             reason=reason,
+#             notes=notes,
+#         )
+#     )
 
-    try:
-        print(query)
-        cur.execute(query)
-        conn.commit()
-    except:
-        print("Unable to save interaction")
-    finally:
-        conn.close()
+#     try:
+#         print(query)
+#         cur.execute(query)
+#         conn.commit()
+#     except:
+#         print("Unable to save interaction")
+#     finally:
+#         conn.close()
 
 
 def suspend_influencer_servalan(
@@ -213,13 +214,13 @@ def suspend_influencer_servalan(
 
         # Send log to AW DB with user suspension
         current_email = pd.read_json(current_email, orient="split")
-        record_influencer_action(
-            employee_email=current_email.loc[0, "email"],
-            influencer_id=influencer_id,
-            action="suspended_influencer",
-            reason=reason,
-            notes=notes,
-        )
+        # record_influencer_action(
+        #     employee_email=current_email.loc[0, "email"],
+        #     influencer_id=influencer_id,
+        #     action="suspended_influencer",
+        #     reason=reason,
+        #     notes=notes,
+        # )
 
         return f"Success! influencer {handle}: {str(influencer_id)} has been suspended"
 

@@ -727,13 +727,13 @@ def approve_influencer(n_clicks, reason, notes, handle, current_email):
 
         # Send log to S3 with user suspension
         current_email = pd.read_json(current_email, orient="split")
-        record_influencer_action(
-            employee_email=current_email.loc[0, "email"],
-            influencer_id=influencer_id,
-            action="approved_safe_search",
-            reason=reason,
-            notes=notes,
-        )
+        # record_influencer_action(
+        #     employee_email=current_email.loc[0, "email"],
+        #     influencer_id=influencer_id,
+        #     action="approved_safe_search",
+        #     reason=reason,
+        #     notes=notes,
+        # )
 
         return [html.P(message, style={"display": "inline"})]
     else:
