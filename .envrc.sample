@@ -1,0 +1,13 @@
+export FIXER_API_KEY='secret'
+export HOST='localhost'
+export DATABASE='vamp_api3_development'
+export DBUSER='postgres'
+export PASSWORD='secret'
+export SSLMODE='prefer'
+export DEBUGMODE='TRUE'
+export DEFAULT_S3_BUCKET='vamp-datalake'
+export AWS_ACCESS_KEY='secret'
+export AWS_SECRET_ACCESS_KEY='secret'
+export ANALYTICS_API_BASE='https://staging-analytics-api.vamp.me'
+export ANALYTICS_API_KEY='secret'
+export WHITELIST_EMAILS=mark@vamp.me,ben@vamp.me,gabriele@vamp.me,ngaio@vamp.me,andreww@vamp.me,sophie@vamp.me
