@@ -1,0 +1,71 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: PR Testing
+
+on: push
+
+jobs:
+  pr_testing:
+    environment:
+      name: PR Testing
+      url: https://github.com
+    env:
+      # AWS
+      DEFAULT_S3_BUCKET: ${{ secrets.DEFAULT_S3_BUCKET }}
+      AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      ANALYTICS_BUCKET: ${{ secrets.ANALYTICS_BUCKET }}
+      ANALYTICS_API_BASE: ${{ secrets.ANALYTICS_API_BASE }}
+      ANALYTICS_API_KEY: ${{ secrets.ANALYTICS_API_KEY }}
+
+      # Analytics warehouse DB
+      AWH_DATABASE: ${{ secrets.AWH_DATABASE }}
+      AWH_DBUSER: ${{ secrets.AWH_DBUSER }}
+      AWH_HOST: ${{ secrets.AWH_HOST }}
+      AWH_PASSWORD: ${{ secrets.AWH_PASSWORD }}
+      AWH_SSLMODE: ${{ secrets.AWH_SSLMODE }}
+
+      # Prod DB
+      DATABASE: ${{ secrets.DATABASE }}
+      DBUSER: ${{ secrets.DBUSER }}
+      HOST: ${{ secrets.HOST }}
+      PASSWORD: ${{ secrets.PASSWORD }}
+      SSLMODE: ${{ secrets.SSLMODE }}
+
+      # Metrics envs
+      FIXER_API_KEY: ${{ secrets.FIXER_API_KEY }}
+      DEBUGMODE: ${{ secrets.DEBUGMODE }}
+      WHITELIST_EMAILS: ${{ secrets.WHITELIST_EMAILS }}
+
+      STAGE: Staging
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+
+    # Spin up local version to run tests
+    - name: Install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install awscli build-essential zlib1g-dev libssl-dev libncurses-dev libffi-dev libsqlite3-dev libreadline-dev libbz2-dev
+        python -m pip install --upgrade pip
+        pip install pytest
+        pip install flake8
+        pip install awsebcli --upgrade --user
+
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics

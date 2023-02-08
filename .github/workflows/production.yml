@@ -1,0 +1,167 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Production
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    environment:
+      name: Production
+      url: https://github.com
+
+    env:
+      # AWS
+      DEFAULT_S3_BUCKET: ${{ secrets.DEFAULT_S3_BUCKET }}
+      AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      ANALYTICS_BUCKET: ${{ secrets.ANALYTICS_BUCKET }}
+      ANALYTICS_API_BASE: ${{ secrets.ANALYTICS_API_BASE }}
+      ANALYTICS_API_KEY: ${{ secrets.ANALYTICS_API_KEY }}
+
+      # Analytics warehouse DB
+      AWH_DATABASE: ${{ secrets.AWH_DATABASE }}
+      AWH_DBUSER: ${{ secrets.AWH_DBUSER }}
+      AWH_HOST: ${{ secrets.AWH_HOST }}
+      AWH_PASSWORD: ${{ secrets.AWH_PASSWORD }}
+      AWH_SSLMODE: ${{ secrets.AWH_SSLMODE }}
+
+      # Prod DB
+      DATABASE: ${{ secrets.DATABASE }}
+      DBUSER: ${{ secrets.DBUSER }}
+      HOST: ${{ secrets.HOST }}
+      PASSWORD: ${{ secrets.PASSWORD }}
+      SSLMODE: ${{ secrets.SSLMODE }}
+
+      # Metrics envs
+      FIXER_API_KEY: ${{ secrets.FIXER_API_KEY }}
+      DEBUGMODE: ${{ secrets.DEBUGMODE }}
+      WHITELIST_EMAILS: ${{ secrets.WHITELIST_EMAILS }}
+
+      EMAILS_ACCESS_KEY_ID: ${{ secrets.EMAILS_ACCESS_KEY }}
+      EMAILS_SECRET_ACCESS_KEY: ${{ secrets.EMAILS_SECRET_ACCESS_KEY }}
+
+      EMAIL_LIST: ${{ secrets.EMAIL_LIST }}
+
+      CM_API_KEY: ${{ secrets.CM_API_KEY }}
+      CM_EMAIL_TEMPLATE: ${{ secrets.CM_EMAIL_TEMPLATE }}
+      CM_CAMP_PERF_TEMPLATE: ${{ secrets.CM_CAMP_PERF_TEMPLATE }}
+
+
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+
+      # Spin up local version to run tests
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install awscli build-essential zlib1g-dev libssl-dev libncurses-dev libffi-dev libsqlite3-dev libreadline-dev libbz2-dev
+          python -m pip install --upgrade pip
+          pip install pytest
+          pip install flake8
+          pip install awsebcli --upgrade --user
+
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Set up .env
+        run: |
+          cp .env-example .env
+
+          # Metrics envs
+          sed "s|^FIXER_API_KEY=secret|FIXER_API_KEY=$FIXER_API_KEY|" -i .env
+          sed "s|^WHITELIST_EMAILS=secret|WHITELIST_EMAILS=$WHITELIST_EMAILS|" -i .env
+
+          # Prod DB
+          sed "s|^HOST=secret|HOST=$HOST|" -i .env
+          sed "s|^DATABASE=secret|DATABASE=$DATABASE|" -i .env
+          sed "s|^DBUSER=secret|DBUSER=$DBUSER|" -i .env
+          sed "s|^PASSWORD=secret|PASSWORD=$PASSWORD|" -i .env
+
+          # AWS
+          sed "s|^DEFAULT_S3_BUCKET=secret|DEFAULT_S3_BUCKET=$DEFAULT_S3_BUCKET|" -i .env
+          sed "s|^AWS_ACCESS_KEY=secret|AWS_ACCESS_KEY=$AWS_ACCESS_KEY|" -i .env
+          sed "s|^AWS_SECRET_ACCESS_KEY=secret|AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY|" -i .env
+          sed "s|^ANALYTICS_BUCKET=secret|ANALYTICS_BUCKET=$ANALYTICS_BUCKET|" -i .env
+          sed "s|^ANALYTICS_API_BASE=secret|ANALYTICS_API_BASE=$ANALYTICS_API_BASE|" -i .env
+          sed "s|^ANALYTICS_API_KEY=secret|ANALYTICS_API_KEY=$ANALYTICS_API_KEY|" -i .env
+
+          # Analytics Warehouse DB
+          sed "s|^AWH_HOST=secret|AWH_HOST=$AWH_HOST|" -i .env
+          sed "s|^AWH_DATABASE=secret|AWH_DATABASE=$AWH_DATABASE|" -i .env
+          sed "s|^AWH_DBUSER=secret|AWH_DBUSER=$AWH_DBUSER|" -i .env
+          sed "s|^AWH_PASSWORD=secret|AWH_PASSWORD=$AWH_PASSWORD|" -i .env
+
+      - name: Set AWS Credentials
+        run: |
+          mkdir -p ~/.aws/
+          touch ~/.aws/config && touch ~/.aws/credentials
+          echo -e "[default]\nregion = ap-southeast-2\noutput = json" >> ~/.aws/config
+          echo -e "[default]\naws_access_key_id = $(echo $AWS_ACCESS_KEY)\naws_secret_access_key = $(echo $AWS_SECRET_ACCESS_KEY)" >> ~/.aws/credentials
+
+      - name: Deploy to EB
+        run: |
+          eb init metrics-dashboard --region ap-southeast-2 -v --platform docker --tags app='Metrics Dashboard',repo=https://github.com/visual-amplifiers/metrics-dashboard,environment=production,service=buisness-intelligence
+          eb use metrics-prod-docker-3
+          eb setenv $(sed '/^[\n\#]/d' .env)
+          eb deploy
+
+      - name: Setup Ubuntu
+        run: |
+          sudo apt-get update
+          which python # Just sanity checks
+          node --version # Just sanity checks
+          sudo apt-get install libpq-dev python3-all-dev # Required to work psycopg2-binary
+
+      - name: install serverless
+        run: |
+          sudo npm install -g serverless
+          sudo npm install --save serverless-python-requirements serverless-dotenv-plugin
+
+
+      - name: Deploy lambda functions
+        run: |
+          cd emails/
+          cp .env-example .env
+
+          # Prod DB
+          sed "s|^HOST=secret|HOST=$HOST|" -i .env
+          sed "s|^DATABASE=secret|DATABASE=$DATABASE|" -i .env
+          sed "s|^DBUSER=secret|DBUSER=$DBUSER|" -i .env
+          sed "s|^PASSWORD=secret|PASSWORD=$PASSWORD|" -i .env
+
+          # AWS
+          sed "s|^DEFAULT_S3_BUCKET=secret|DEFAULT_S3_BUCKET=$DEFAULT_S3_BUCKET|" -i .env
+          sed "s|^ACCESS_KEY_ID=secret|ACCESS_KEY_ID=$EMAILS_ACCESS_KEY_ID|" -i .env
+          sed "s|^SECRET_ACCESS_KEY=secret|SECRET_ACCESS_KEY=$EMAILS_SECRET_ACCESS_KEY|" -i .env
+
+
+          sed "s|^EMAIL_LIST=secret|EMAIL_LIST=$EMAIL_LIST|" -i .env
+          sed "s|^CM_API_KEY=secret|CM_API_KEY=$CM_API_KEY|" -i .env
+          sed "s|^CM_EMAIL_TEMPLATE=secret|CM_EMAIL_TEMPLATE=$CM_EMAIL_TEMPLATE|" -i .env
+          sed "s|^CM_CAMP_PERF_TEMPLATE=secret|CM_CAMP_PERF_TEMPLATE=$CM_CAMP_PERF_TEMPLATE|" -i .env
+
+          sls deploy --stage Production
