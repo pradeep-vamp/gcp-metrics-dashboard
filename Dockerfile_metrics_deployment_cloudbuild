@@ -1,0 +1,19 @@
+FROM python:3.8-slim
+LABEL maintainer "Pradeep Shankar <pradeep@vamp.me>"
+USER root
+
+ENV PYTHONUNBUFFERED True
+
+ENV APP_HOME /app
+WORKDIR $APP_HOME
+
+RUN apt update && apt upgrade -y && pip install --upgrade pip
+
+
+# Install production dependencies.
+RUN pip install -r requirements.txt
+
+EXPOSE 8080
+#EXPOSE 443
+
+CMD ["python", "./application.py"]
