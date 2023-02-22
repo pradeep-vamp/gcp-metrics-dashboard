@@ -1,27 +1,52 @@
 # In this directory, run the following command to build this builder.
-# $ gcloud beta builds submit . --config=dev.cloudbuild.yaml --substitutions=_COMPOSER_NAME="vamp-airflow-staging-2",_COMPOSER_REGION="europe-west1",_DAGS_BUCKET="europe-west1-vamp-airflow-s-95799ec8-bucket"
+# $ gcloud builds submit . --config=dev.cloudbuild.yaml
 
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-  id: collector_deploy_process
-  entrypoint: 'docker'
-  args: [
-          'build',
-          '--build-arg',
-          'PROJECT_ID=${PROJECT_ID}',
-          '--build-arg',
-          '--tag=gcr.io/$PROJECT_ID/metrics-dashboard:${BUILD_ID}',
-          '--file=Dockerfile_metrics_deployment_cloudbuild',
-          '.'
-        ]
+    id: metrics_build_process
+    entrypoint: docker
+    args: [
+            'build',
+            # '--build-arg',
+            # 'METRICS_SECRETS=$${METRICS_SECRETS}',
+            '-t','eu.gcr.io/$PROJECT_ID/vamp-analytics/metrics-dashboard:${BUILD_ID}',
+            '-f','Dockerfile_metrics_deployment_cloudbuild',
+            '.'
+          ]
+    # secretEnv: ['METRICS_SECRETS']
 
-availableSecrets:
-  secretManager:
-  - versionName: projects/$PROJECT_ID/secrets/composer-staging/versions/latest
-    env: 'COMPOSER_SECRETS'
+  - name: 'gcr.io/cloud-builders/docker'
+    id: metrics_push_container_process
+    args: ['push', 'eu.gcr.io/$PROJECT_ID/vamp-analytics/metrics-dashboard:${BUILD_ID}']
+    waitFor:
+      - metrics_build_process
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: metrics_cloud_run_deploy_process
+    entrypoint: gcloud
+    args: [
+      'run', 'deploy',
+      'metrics-dashboard', '--image', 'eu.gcr.io/$PROJECT_ID/vamp-analytics/metrics-dashboard:${BUILD_ID}',
+      '--region', 'europe-west1',
+      '--platform', 'managed',
+      '--allow-unauthenticated',
+      '--set-env-vars', 'FIXER_API_KEY=FIXER_API_KEY:latest,DEBUGMODE=DEBUGMODE:latest,WHITELIST_EMAILS=WHITELIST_EMAILS:latest,HOST=HOST:latest,DATABASE=DATABASE:latest,DBUSER=DBUSER:latest,PASSWORD=PASSWORD:latest,SSLMODE=SSLMODE:latest,DEFAULT_S3_BUCKET=DEFAULT_S3_BUCKET:latest,AWS_ACCESS_KEY=AWS_ACCESS_KEY:latest,AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY:latest,ANALYTICS_BUCKET=ANALYTICS_BUCKET:latest,ANALYTICS_API_BASE=ANALYTICS_API_BASE:latest,ANALYTICS_API_KEY=ANALYTICS_API_KEY:latest',
+      ]
+    waitFor:
+      - metrics_push_container_process
+    # secretEnv: ['METRICS_SECRETS']
+
+# availableSecrets:
+#   secretManager:
+#   - versionName: projects/703731371978/secrets/metrics-dashboard-dev/versions/latest
+#     env: 'METRICS_SECRETS'
 
 
-timeout: 3600s #1 hour timeout accommodates the long running Composer upgrade operation
+
+timeout: 1800s
+images: [
+  'eu.gcr.io/$PROJECT_ID/vamp-analytics/metrics-dashboard:${BUILD_ID}',
+]
 
 options:
   logging: CLOUD_LOGGING_ONLY

@@ -25,11 +25,6 @@ bucket = os.getenv("DEFAULT_S3_BUCKET")
 
 WHITELIST_EMAILS = os.getenv("WHITELIST_EMAILS").split(",")
 
-credentials = os.getenv("GOOGLE_CREDENTIALS_RAW")
-
-with open("/tmp/vamp-google-credentials.json", "w") as outfile:
-    outfile.write(credentials)
-
 
 def fetch_from_bigquery(query_string):
 
