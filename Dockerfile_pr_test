@@ -1,0 +1,24 @@
+FROM python:latest
+
+# Not working - trialing docker file
+
+LABEL maintainer "Pradeep Shankar <pradeep@vamp.me>"
+USER root
+
+ARG PROJECT_ID="$1"
+ARG DEBIAN_FRONTEND=noninteractive
+
+ENV PYTHONUNBUFFERED True
+RUN apt-get update
+# RUN apt-get install awscli build-essential zlib1g-dev libssl-dev libncurses-dev libffi-dev libsqlite3-dev libreadline-dev libbz2-dev
+# RUN apt-get install python
+RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install pytest
+RUN python3 -m pip install flake8
+RUN pip install awsebcli --upgrade --user
+
+# stop the build if there are Python syntax errors or undefined names
+# RUN flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+# # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+# RUN flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+CMD ["run_tests.py"]

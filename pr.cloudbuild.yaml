@@ -1,0 +1,48 @@
+# In this directory, run the following command to build this builder.
+# $ gcloud config set project vamp-metrics-stage
+# $ gcloud builds submit . --config=pr.cloudbuild.yaml
+
+steps:
+# - name: 'gcr.io/cloud-builders/gcloud'
+#   id: pr_test
+#   entrypoint: 'bash'
+#   args:
+#     [
+#       'pr_test.sh',
+#       '$PROJECT_ID',
+#     ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: metrics_build_process
+  entrypoint: docker
+  args: [
+          'build',
+          '-f','Dockerfile_pr_test',
+          '.'
+        ]
+
+  # - name: 'gcr.io/cloud-builders/docker'
+  #   id: pr_test
+  #   script: |
+  #     #!/bin/bash
+  #     DEBIAN_FRONTEND=noninteractive apt-get update
+  #     DEBIAN_FRONTEND=noninteractive apt-get install awscli build-essential zlib1g-dev libssl-dev libncurses-dev libffi-dev libsqlite3-dev libreadline-dev libbz2-dev
+
+  #     #!/usr/bin/env python
+  #     python -m pip install --upgrade pip
+  #     pip install pytest
+  #     pip install flake8
+  #     pip install awsebcli --upgrade --user
+
+  #     #!/bin/bash
+  #     # stop the build if there are Python syntax errors or undefined names
+  #     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+  #     # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+  #     flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+
+
+timeout: 1800s
+
+# options:
+#   logging: CLOUD_LOGGING_ONLY
