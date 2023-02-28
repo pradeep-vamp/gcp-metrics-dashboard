@@ -1,67 +1,43 @@
 # In this directory, run the following command to build this builder.
-# $ gcloud beta builds submit . --config=prod.cloudbuild.yaml --substitutions=_COMPOSER_NAME="vamp-airflow-production-2",_COMPOSER_REGION="europe-west1",_DAGS_BUCKET="europe-west1-vamp-airflow-p-8bba2cd8-bucket"
+# $ gcloud config set project vamp-metrics-prod
+# $ gcloud builds submit . --config=prod.cloudbuild.yaml
 
 steps:
-  - name: gcr.io/cloud-builders/gsutil
-    args: ['-m', 'cp', '-r', './dags', 'gs://${_DAGS_BUCKET}']
-    waitFor: ['-']
-    id: 'copy-composer-dag-file'
+  - name: 'gcr.io/cloud-builders/docker'
+    id: metrics_build_process
+    entrypoint: docker
+    args: [
+            'build',
+            '-t','eu.gcr.io/$PROJECT_ID/vamp-analytics/metrics-dashboard:${BUILD_ID}',
+            '-f','Dockerfile',
+            '.'
+          ]
 
-  - name: gcr.io/cloud-builders/gsutil
-    args: ['-m', 'cp', '-r', './data', 'gs://${_DAGS_BUCKET}']
-    waitFor: ['-']
-    id: 'copy-composer-data-files'
-    
-  - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        custom_comm=$(gcloud composer environments update $_COMPOSER_NAME --update-pypi-packages-from-file requirements-composer.txt --location $_COMPOSER_REGION --verbosity=debug 2>&1); \
-        echo "$custom_comm"; \
-        if [[ "$custom_comm" == *"ERROR: (gcloud.composer.environments.update) INVALID_ARGUMENT: No change in configuration. Must specify a change to configuration.software_configuration.pypi_dependencies"* ]]; then \
-          echo "This failure is expected if there is no change to requirements-composer.txt"; exit 0; \ 
-        else exit 0; \
-        fi
-    waitFor: ['copy-composer-data-files', 'copy-composer-dag-file']
-    id: 'update-composer-env'
+  - name: 'gcr.io/cloud-builders/docker'
+    id: metrics_push_container_process
+    args: ['push', 'eu.gcr.io/$PROJECT_ID/vamp-analytics/metrics-dashboard:${BUILD_ID}']
+    waitFor:
+      - metrics_build_process
 
-  - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        custom_comm=$(gcloud composer environments update $_COMPOSER_NAME --location=$_COMPOSER_REGION --update-env-variables=$${COMPOSER_SECRETS} --async --verbosity=debug 2>&1); \
-        echo "$custom_comm"; \
-        if [[ "$custom_comm" == *"ERROR: (gcloud.composer.environments.update) INVALID_ARGUMENT: No change in configuration. Must specify a change to configuration.software_configuration.env_variables"* ]]; then \
-          echo "This failure is expected if there is no change to airflow  environment variables"; exit 0; \ 
-        else exit 0; \
-        fi
-    waitFor: ['update-composer-env']
-    secretEnv: ['COMPOSER_SECRETS']
-    id: 'update-composer-variables'
-
-  - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        custom_comm=$(gcloud composer environments update $_COMPOSER_NAME --location $_COMPOSER_REGION --update-airflow-configs=secrets-backend=airflow.providers.google.cloud.secrets.secret_manager.CloudSecretManagerBackend,smtp-smtp_port=587,smtp-smtp_mail_from=dd011ebc-46c5-4f77-a82a-892113b79db2,smtp-smtp_host=smtp.api.createsend.com,smtp-smtp_starttls=False,smtp-smtp_ssl=False,smtp-smtp_user=dd011ebc-46c5-4f77-a82a-892113b79db2 --async --verbosity=debug 2>&1); \
-        echo "$custom_comm"; \
-        if [[ "$custom_comm" == *"ERROR: (gcloud.composer.environments.update) INVALID_ARGUMENT: No change in configuration. Must specify a change to configuration.software_configuration.airflow-configs"* ]]; then \
-          echo "This failure is expected if there is no change override to airflow configuration variables"; exit 0;  \ 
-        else exit 0; \
-        fi
-    waitFor: ['update-composer-env']
-    id: 'overwrite-composer-config-for-sendgrid'
-
-availableSecrets:
-  secretManager:
-  - versionName: projects/$PROJECT_ID/secrets/composer-production/versions/latest
-    env: 'COMPOSER_SECRETS'
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: metrics_cloud_run_deploy_process
+    entrypoint: gcloud
+    args: [
+      'run', 'deploy',
+      'metrics-dashboard', '--image', 'eu.gcr.io/$PROJECT_ID/vamp-analytics/metrics-dashboard:${BUILD_ID}',
+      '--region', 'europe-west1',
+      '--platform', 'managed',
+      '--allow-unauthenticated',
+      '--set-secrets', 'FIXER_API_KEY=FIXER_API_KEY:latest,DEBUGMODE=DEBUGMODE:latest,WHITELIST_EMAILS=WHITELIST_EMAILS:latest,HOST=HOST:latest,DATABASE=DATABASE:latest,DBUSER=DBUSER:latest,PASSWORD=PASSWORD:latest,SSLMODE=SSLMODE:latest,DEFAULT_S3_BUCKET=DEFAULT_S3_BUCKET:latest,AWS_ACCESS_KEY=AWS_ACCESS_KEY:latest,AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY:latest,ANALYTICS_BUCKET=ANALYTICS_BUCKET:latest,ANALYTICS_API_BASE=ANALYTICS_API_BASE:latest,ANALYTICS_API_KEY=ANALYTICS_API_KEY:latest',
+      ]
+    waitFor:
+      - metrics_push_container_process
 
 
-timeout: 3600s #1 hour timeout accommodates the long running Composer upgrade operation
+timeout: 1800s
+images: [
+  'eu.gcr.io/$PROJECT_ID/vamp-analytics/metrics-dashboard:${BUILD_ID}',
+]
 
 options:
   logging: CLOUD_LOGGING_ONLY

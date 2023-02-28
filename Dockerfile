@@ -1,20 +1,22 @@
-# Use for local dev
-FROM python:3.8
-LABEL maintainer "Daniel Stratti <daniels@vamp.me>"
+FROM python:3.9
+LABEL maintainer "Pradeep Shankar <pradeep@vamp.me>"
+USER root
 
-WORKDIR /app
+ENV PYTHONUNBUFFERED True
+RUN apt update && apt upgrade -y && pip install --upgrade pip
 
-# Install server
-# RUN apt update
 
+ENV APP_HOME /app
 COPY requirements.txt /
+
+# COPY ./ $APP_HOME
+WORKDIR $APP_HOME
+
+# Install production dependencies.
 RUN pip install -r /requirements.txt
 
 COPY ./ ./
-
 EXPOSE 8080
-#EXPOSE 443
-
 CMD ["python", "./application.py"]
 
 # docker build . -t metrics

@@ -1,4 +1,5 @@
 # In this directory, run the following command to build this builder.
+# $ gcloud config set project vamp-metrics-stage
 # $ gcloud builds submit . --config=dev.cloudbuild.yaml
 
 steps:
@@ -7,13 +8,10 @@ steps:
     entrypoint: docker
     args: [
             'build',
-            # '--build-arg',
-            # 'METRICS_SECRETS=$${METRICS_SECRETS}',
             '-t','eu.gcr.io/$PROJECT_ID/vamp-analytics/metrics-dashboard:${BUILD_ID}',
-            '-f','Dockerfile_metrics_deployment_cloudbuild',
+            '-f','Dockerfile',
             '.'
           ]
-    # secretEnv: ['METRICS_SECRETS']
 
   - name: 'gcr.io/cloud-builders/docker'
     id: metrics_push_container_process
@@ -34,13 +32,6 @@ steps:
       ]
     waitFor:
       - metrics_push_container_process
-    # secretEnv: ['METRICS_SECRETS']
-
-# availableSecrets:
-#   secretManager:
-#   - versionName: projects/703731371978/secrets/metrics-dashboard-dev/versions/latest
-#     env: 'METRICS_SECRETS'
-
 
 
 timeout: 1800s
